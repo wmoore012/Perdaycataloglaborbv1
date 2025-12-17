@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, TrendingUp, DollarSign, Target, PlayCircle, Info } from 'lucide-react';
+import { X, TrendingUp, DollarSign, Target, PlayCircle, Info, Sparkles, Wand2, Zap, Rocket } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Slider } from './ui/slider';
+import { TooltipWrapper, tooltipContent } from './TooltipWrapper';
 
 interface SongDetailModalProps {
   isOpen: boolean;
@@ -21,6 +23,8 @@ export function SongDetailModal({ isOpen, onClose, song }: SongDetailModalProps)
   const [highlightedCharts, setHighlightedCharts] = useState([0, 3, 6]);
   const [userFeedback, setUserFeedback] = useState<string | null>(null);
   const [predictionModel, setPredictionModel] = useState<'linear' | 'quadratic'>('quadratic');
+  const [investment, setInvestment] = useState(1500);
+  const [riskMode, setRiskMode] = useState<'steady' | 'balanced' | 'aggressive'>('balanced');
 
   useEffect(() => {
     if (isOpen) {
@@ -272,6 +276,45 @@ export function SongDetailModal({ isOpen, onClose, song }: SongDetailModalProps)
     ]
   };
 
+  // Dynamic ROI calculator based on investment slider
+  const investmentOutcome = useMemo(() => {
+    const baseMultipliers = {
+      steady: { roi: 2.2, volatility: 5, ceiling: 45 },
+      balanced: { roi: 2.8, volatility: 12, ceiling: 68 },
+      aggressive: { roi: 3.6, volatility: 20, ceiling: 92 },
+    };
+
+    const mode = baseMultipliers[riskMode];
+    const normalizedBudget = Math.min(investment / 5000, 1);
+    
+    // Growth calculation: diminishing returns at scale
+    const rawGrowth = (normalizedBudget * mode.ceiling) + mode.volatility;
+    const growth = Math.min(mode.ceiling, Math.round(rawGrowth));
+    
+    // ROI calculation: higher spend = lower ROI but higher absolute gains
+    const roiPenalty = normalizedBudget * 0.8;
+    const roi = Number(Math.max(1.2, mode.roi - roiPenalty).toFixed(1));
+    
+    // Narrative messaging
+    const narratives = {
+      steady: 'Safe play. Pair organic TikTok content with micro-influencer gifting. Consistent 15-20% lift.',
+      balanced: 'Sweet spot. Run Berlin + Mexico City ads while feeding algorithmic playlists with saves.',
+      aggressive: 'Go viral or go home. Full-stack: paid ads, playlist push, TikTok spark ads, curator outreach.',
+    };
+
+    return {
+      growth,
+      roi,
+      absoluteGain: Math.round((investment * roi) - investment),
+      narrative: narratives[riskMode],
+      recommendedChannels: riskMode === 'steady' 
+        ? ['Organic TikTok', 'Email list'] 
+        : riskMode === 'balanced'
+        ? ['Spotify Ads', 'TikTok', 'Playlist pitching']
+        : ['Full platform mix', 'Influencer collabs', 'Radio push'],
+    };
+  }, [investment, riskMode]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -404,6 +447,183 @@ export function SongDetailModal({ isOpen, onClose, song }: SongDetailModalProps)
                     </motion.div>
                   ))}
                 </div>
+
+                {/* Interactive Investment Calculator */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f0a1f] via-[#18181b] to-[#0f0a1f] p-8 border border-purple-500/20 shadow-2xl shadow-purple-900/20"
+                >
+                  {/* Noise texture */}
+                  <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.08] mix-blend-overlay" />
+                  
+                  {/* Gradient orb */}
+                  <div className="absolute -top-24 -right-24 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
+                  
+                  <div className="relative">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-6">
+                      <div>
+                        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-purple-200/80 font-bold mb-2">
+                          <Rocket className="w-4 h-4" />
+                          Premium ROI Calculator
+                        </div>
+                        <h3 className="text-2xl font-bold text-white mb-2">
+                          If you invest <span className="text-purple-300">${investment.toLocaleString()}</span>
+                        </h3>
+                        <p className="text-sm text-purple-100/70">
+                          Drag the slider to see how budget and strategy impact your returns
+                        </p>
+                      </div>
+                      
+                      <TooltipWrapper content={tooltipContent.prescriptive}>
+                        <div className="p-2.5 rounded-lg bg-white/10 hover:bg-white/15 transition-colors cursor-help">
+                          <Info className="w-5 h-5 text-purple-200" />
+                        </div>
+                      </TooltipWrapper>
+                    </div>
+
+                    {/* Risk Mode Selector */}
+                    <div className="mb-6">
+                      <p className="text-xs uppercase tracking-[0.12em] text-purple-200/70 font-semibold mb-3">
+                        Strategy Mode
+                      </p>
+                      <div className="flex gap-2">
+                        {(['steady', 'balanced', 'aggressive'] as const).map((mode) => (
+                          <button
+                            key={mode}
+                            onClick={() => setRiskMode(mode)}
+                            className={`flex-1 px-4 py-3 rounded-xl text-sm font-semibold transition-all border ${
+                              riskMode === mode
+                                ? 'bg-white text-[#0f0a1f] border-white shadow-lg shadow-white/20'
+                                : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:text-white/90'
+                            }`}
+                          >
+                            {mode === 'steady' ? '🛡️ Steady' : mode === 'balanced' ? '⚡ Balanced' : '🚀 Aggressive'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Investment Slider */}
+                    <div className="mb-6">
+                      <div className="flex justify-between items-center mb-3">
+                        <p className="text-xs uppercase tracking-[0.12em] text-purple-200/70 font-semibold">
+                          Investment Amount
+                        </p>
+                        <p className="text-2xl font-bold text-white">
+                          ${investment.toLocaleString()}
+                        </p>
+                      </div>
+                      
+                      <Slider
+                        value={[investment]}
+                        onValueChange={(val) => setInvestment(val[0])}
+                        min={250}
+                        max={5000}
+                        step={50}
+                        className="mb-2"
+                      />
+                      
+                      <div className="flex justify-between text-[11px] text-purple-100/50 uppercase tracking-widest">
+                        <span>$250</span>
+                        <span>$5k</span>
+                      </div>
+                    </div>
+
+                    {/* Outcome Cards */}
+                    <div className="grid grid-cols-3 gap-4 mb-6">
+                      <div className="p-5 rounded-xl bg-purple-500/10 border border-purple-400/20 backdrop-blur-sm">
+                        <TooltipWrapper content={tooltipContent.descriptive}>
+                          <div className="flex items-center gap-2 text-xs font-semibold text-purple-200/80 uppercase tracking-wider mb-2">
+                            <TrendingUp className="w-3.5 h-3.5" />
+                            Projected Growth
+                          </div>
+                        </TooltipWrapper>
+                        <div className="text-4xl font-black text-white mb-1">
+                          +{investmentOutcome.growth}%
+                        </div>
+                        <p className="text-xs text-purple-100/60">vs current pace</p>
+                      </div>
+
+                      <div className="p-5 rounded-xl bg-emerald-500/10 border border-emerald-400/20 backdrop-blur-sm">
+                        <TooltipWrapper content={tooltipContent.roi}>
+                          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-200/80 uppercase tracking-wider mb-2">
+                            <Zap className="w-3.5 h-3.5" />
+                            ROI Multiple
+                          </div>
+                        </TooltipWrapper>
+                        <div className="text-4xl font-black text-white mb-1">
+                          {investmentOutcome.roi}x
+                        </div>
+                        <p className="text-xs text-emerald-100/60">30-60 day window</p>
+                      </div>
+
+                      <div className="p-5 rounded-xl bg-amber-500/10 border border-amber-400/20 backdrop-blur-sm">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-amber-200/80 uppercase tracking-wider mb-2">
+                          <DollarSign className="w-3.5 h-3.5" />
+                          Net Gain
+                        </div>
+                        <div className="text-4xl font-black text-white mb-1">
+                          ${investmentOutcome.absoluteGain.toLocaleString()}
+                        </div>
+                        <p className="text-xs text-amber-100/60">in campaign value</p>
+                      </div>
+                    </div>
+
+                    {/* Strategy Narrative */}
+                    <div className="p-5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm mb-6">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-lg bg-purple-400/20">
+                          <Wand2 className="w-5 h-5 text-purple-200" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs uppercase tracking-[0.12em] text-purple-200/70 font-semibold mb-2">
+                            Your Playbook
+                          </p>
+                          <p className="text-sm text-white/90 leading-relaxed mb-3">
+                            {investmentOutcome.narrative}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {investmentOutcome.recommendedChannels.map((channel, idx) => (
+                              <span
+                                key={idx}
+                                className="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white/80 border border-white/20"
+                              >
+                                {channel}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Script */}
+                    <div className="p-5 rounded-xl bg-gradient-to-br from-purple-500/20 to-fuchsia-500/20 border border-purple-400/30">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Target className="w-5 h-5 text-purple-200" />
+                        <span className="text-xs font-bold uppercase tracking-[0.15em] text-purple-100">
+                          Next 72 Hours
+                        </span>
+                      </div>
+                      <ul className="space-y-2 text-sm text-purple-50/90">
+                        <li className="flex items-start gap-2">
+                          <span className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-300 shrink-0" />
+                          <span>Launch 2-3 short-form clips highlighting the hook with {investmentOutcome.recommendedChannels[0]} subtitles</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-300 shrink-0" />
+                          <span>Allocate ${Math.round(investment * 0.4).toLocaleString()} to test ads, pause anything below 1.5x CTR</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-300 shrink-0" />
+                          <span>DM 3-5 curators with your "{song.velocity}" momentum badge + projected {investmentOutcome.growth}% lift</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </motion.div>
 
                 {/* User Feedback Section */}
                 <div className="mt-8 p-6 bg-amber-50 border border-amber-200 rounded-xl">
